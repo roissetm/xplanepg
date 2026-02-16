@@ -8,8 +8,8 @@
 
 DO $$
 BEGIN
-    -- Check if pg_cron extension is available
-    IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'pg_cron') THEN
+    -- Check if pg_cron is loaded in shared_preload_libraries (not just installed)
+    IF EXISTS (SELECT 1 FROM pg_settings WHERE name = 'cron.database_name') THEN
         CREATE EXTENSION IF NOT EXISTS pg_cron;
 
         -- Schedule reconciliation every 30 seconds
@@ -20,7 +20,7 @@ BEGIN
         );
         RAISE NOTICE 'pg_cron: crossplane-reconcile job scheduled (every 30s)';
     ELSE
-        RAISE WARNING 'pg_cron is not available. Add pg_cron to shared_preload_libraries and restart PostgreSQL to enable automatic reconciliation.';
+        RAISE WARNING 'pg_cron is not loaded. Add pg_cron to shared_preload_libraries in postgresql.conf and restart PostgreSQL.';
     END IF;
 END;
 $$;
