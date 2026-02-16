@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pg_version: [14, 15, 16, 17]
+
+    services:
+      postgres:
+        image: postgres:${{ matrix.pg_version }}
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      XPLANE_DB_HOST: localhost
+      XPLANE_DB_PORT: 5432
+      XPLANE_DB_NAME: postgres
+      XPLANE_DB_USER: postgres
+      XPLANE_DB_PASSWORD: postgres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Install pgTAP from source
+        run: |
+          git clone --depth 1 https://github.com/theory/pgtap.git /tmp/pgtap
+          cd /tmp/pgtap
+          make
+          PGPASSWORD=postgres psql -h localhost -U postgres -d postgres -f sql/pgtap.sql
+
+      - name: Install dblink extension
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d postgres \
+            -c "CREATE EXTENSION IF NOT EXISTS dblink;"
+
+      - name: Install XplanePLPG
+        run: make install
+
+      - name: Run unit tests
+        run: make test-unit
+
+      - name: Run integration tests
+        run: make test-integration
