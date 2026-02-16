@@ -281,5 +281,5 @@ SELECT kind, name, status_code, status_message,
        ready, ready_reason,
        reconcile_count
 FROM crossplane.resource_status
-WHERE status_code LIKE '4%'
-   OR status_code LIKE '5%';
+WHERE status_code::TEXT LIKE '4%'
+   OR status_code::TEXT LIKE '5%';
