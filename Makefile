@@ -18,6 +18,7 @@ PSQL = PGPASSWORD="$(XPLANE_DB_PASSWORD)" psql -h $(XPLANE_DB_HOST) -p $(XPLANE_
 
 install:
 	@echo "==> Installing XplanePLPG..."
+	$(PSQL) -c "DROP SCHEMA IF EXISTS crossplane CASCADE;"
 	$(PSQL) -c "CREATE EXTENSION IF NOT EXISTS dblink;"
 	$(PSQL) -f sql/00_schema_provider.sql
 	$(PSQL) -f sql/01_helpers.sql
