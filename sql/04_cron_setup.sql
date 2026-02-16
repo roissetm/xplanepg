@@ -2,18 +2,28 @@
 -- SETUP PG_CRON POUR RÉCONCILIATION AUTOMATIQUE
 -- ============================================================================
 -- Nécessite l'extension pg_cron installée sur le serveur.
+-- pg_cron MUST be in shared_preload_libraries in postgresql.conf.
 -- La réconciliation tourne toutes les 30 secondes.
 -- ============================================================================
 
--- Installer pg_cron si disponible
-CREATE EXTENSION IF NOT EXISTS pg_cron;
+DO $$
+BEGIN
+    -- Check if pg_cron extension is available
+    IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'pg_cron') THEN
+        CREATE EXTENSION IF NOT EXISTS pg_cron;
 
--- Planifier la réconciliation toutes les 30 secondes
-SELECT cron.schedule(
-    'crossplane-reconcile',
-    '30 seconds',
-    $$SELECT * FROM crossplane.reconcile_all()$$
-);
+        -- Schedule reconciliation every 30 seconds
+        PERFORM cron.schedule(
+            'crossplane-reconcile',
+            '30 seconds',
+            'SELECT * FROM crossplane.reconcile_all()'
+        );
+        RAISE NOTICE 'pg_cron: crossplane-reconcile job scheduled (every 30s)';
+    ELSE
+        RAISE WARNING 'pg_cron is not available. Add pg_cron to shared_preload_libraries and restart PostgreSQL to enable automatic reconciliation.';
+    END IF;
+END;
+$$;
 
 -- Pour désactiver :
 -- SELECT cron.unschedule('crossplane-reconcile');
