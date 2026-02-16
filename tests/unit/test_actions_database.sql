@@ -2,14 +2,14 @@
 -- UNIT TESTS : Database Actions (create, update, delete)
 -- ============================================================================
 -- NOTE: CREATE/DROP DATABASE cannot run inside a transaction.
--- These tests use dblink (via the action functions) which executes
--- outside the current transaction. We use explicit cleanup.
+-- dblink executes outside the current transaction, and ALTER DATABASE
+-- requires exclusive locks incompatible with open transactions.
+-- Therefore these tests run WITHOUT BEGIN/ROLLBACK and use explicit cleanup.
 -- ============================================================================
 
--- Ensure clean state before tests
+-- Ensure clean state
 SELECT crossplane.delete_database('{"name":"test_xplane_db1"}'::JSONB);
 
-BEGIN;
 SELECT plan(7);
 
 -- ============================================================================
@@ -88,4 +88,3 @@ SELECT is(
 );
 
 SELECT * FROM finish();
-ROLLBACK;
