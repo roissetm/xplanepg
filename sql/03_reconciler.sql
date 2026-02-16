@@ -237,7 +237,7 @@ BEGIN
         ORDER BY
             CASE
                 WHEN mr.status_code = '100_PENDING' THEN 0
-                WHEN mr.status_code LIKE '4%' OR mr.status_code LIKE '5%' THEN 1
+                WHEN mr.status_code::TEXT LIKE '4%' OR mr.status_code::TEXT LIKE '5%' THEN 1
                 ELSE 2
             END,
             mr.updated_at ASC
